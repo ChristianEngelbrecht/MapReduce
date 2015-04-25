@@ -1,0 +1,6 @@
+{
+  "config":{
+    "Port":2345,
+    "IP":"localhost"
+  }
+}
