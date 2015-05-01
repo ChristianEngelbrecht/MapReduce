@@ -37,6 +37,7 @@ public class ReceiveMap extends Verticle {
         bus.registerHandler("map.data", new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message){
+                // todo: Map and Reduce
                 System.out.print(message.body());
                 bus.send("pingVerticle.set.free", true);
             }
