@@ -9,6 +9,9 @@ import org.vertx.java.core.net.NetServer;
 import org.vertx.java.core.net.NetSocket;
 import org.vertx.java.platform.Verticle;
 
+import java.util.HashMap;
+import java.util.Map;
+
 
 /**
  * Created by Christian on 04.04.2015.
@@ -19,6 +22,7 @@ public class ReceiveMap extends Verticle {
     private EventBus bus;
     private boolean free;
     private int port;
+    private Map<Character,Integer> charMap;
     @Override
     public void start(){
         // Initialisieren der Variablen
@@ -26,19 +30,20 @@ public class ReceiveMap extends Verticle {
         bus = vertx.eventBus();
         port =container.config().getInteger("Port");
         free = true;
+        charMap = new HashMap<>();
         bus.registerHandler("receiveMap.set.free", new Handler<Message<Boolean>>() {
             @Override
             public void handle(Message<Boolean> message) {
                 free = message.body();
-                //log.info("MapReduce Verticle is ready to process some data");
             }
         });
 
         bus.registerHandler("map.data", new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message){
-                // todo: Map and Reduce
-                System.out.print(message.body());
+                message.body().chars().parallel().forEach(c -> countChar((char) c));
+
+                // System.out.print(message.body());
                 bus.send("pingVerticle.set.free", true);
             }
         });
@@ -51,8 +56,8 @@ public class ReceiveMap extends Verticle {
                 netSocket.dataHandler(new Handler<Buffer>() {
                     @Override
                     public void handle(Buffer buffer) {
-                        log.info(buffer.toString());
-                        log.warn("RECEIVED JUHUUUUHUUHUJ");
+                        bus.send("map.data", buffer.toString());
+                        //log.warn("RECEIVED JUHUUUUHUUHUJ");
                         netSocket.close();
                     }
                 });
@@ -60,4 +65,16 @@ public class ReceiveMap extends Verticle {
         }).listen(++port);
 
     }
+
+    public void countChar(char c){
+        if(charMap.get(c) == null){
+            charMap.put(c,1);
+        }else{
+            int tmp = (charMap.get(c));
+            charMap.put(c, ++tmp);
+        }
+        System.out.print(charMap.toString());
+
+    }
+
 }
