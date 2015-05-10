@@ -39,12 +39,13 @@ public class PingVerticle extends Verticle {
                     public void handle(Buffer buffer) {
                         //log.info("I received " + buffer.toString());
                         if (buffer.toString().equals("ping") && free == true){
+                            free = false;
                             //log.info("MapReduce client with port " + config.getInteger("Port") + " is available");
                             // Port des aktuell verfügbaren MapReduce Clients wird retourniert
                             netSocket.write(String.valueOf(config.getInteger("Port")));
                             bus.send("receiveMap.set.free", free);
                         } else {
-                            if (!buffer.toString().equals("ping") && free) {
+                            if (!buffer.toString().equals("ping")) {
                                 free = false;
                                 netSocket.close();
                                 //log.info("Received data for mapReduce task");

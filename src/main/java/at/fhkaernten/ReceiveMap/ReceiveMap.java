@@ -7,8 +7,10 @@ import org.vertx.java.core.eventbus.Message;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.core.net.NetServer;
 import org.vertx.java.core.net.NetSocket;
+import org.vertx.java.core.parsetools.RecordParser;
 import org.vertx.java.platform.Verticle;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,6 +25,8 @@ public class ReceiveMap extends Verticle {
     private boolean free;
     private int port;
     private Map<Character,Integer> charMap;
+    private Map<String,Integer> wordMap;
+    private int check = 0;
     @Override
     public void start(){
         // Initialisieren der Variablen
@@ -31,6 +35,7 @@ public class ReceiveMap extends Verticle {
         port =container.config().getInteger("Port");
         free = true;
         charMap = new HashMap<>();
+        wordMap = new HashMap<>();
         bus.registerHandler("receiveMap.set.free", new Handler<Message<Boolean>>() {
             @Override
             public void handle(Message<Boolean> message) {
@@ -38,13 +43,28 @@ public class ReceiveMap extends Verticle {
             }
         });
 
-        bus.registerHandler("map.data", new Handler<Message<String>>() {
+        bus.registerHandler("map.data.char", new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message){
                 message.body().chars().parallel().forEach(c -> countChar((char) c));
-
                 // System.out.print(message.body());
                 bus.send("pingVerticle.set.free", true);
+            }
+        });
+
+        bus.registerHandler("map.data.word", new Handler<Message<String>>() {
+            @Override
+            public void handle(Message<String> message){
+                System.out.println(message.body());
+                if (message.body().startsWith("  Inconsistencies in Big Data")){
+                    check++;
+                }
+                System.out.println(message.body().length());
+                //message.body().chars().parallel().forEach(c -> countChar((char) c));
+                /**String[] test = message.body().split(" ");
+                Arrays.stream(test).parallel().forEach(s -> countWords((String) s));
+                // System.out.print(message.body());
+                bus.send("pingVerticle.set.free", true);**/
             }
         });
 
@@ -53,14 +73,15 @@ public class ReceiveMap extends Verticle {
             @Override
             public void handle(final NetSocket netSocket) {
                 log.info("A data client has connected");
-                netSocket.dataHandler(new Handler<Buffer>() {
+                System.out.println(dataServer.getReceiveBufferSize());
+                netSocket.dataHandler(RecordParser.newDelimited("$END$", new Handler<Buffer>() {
                     @Override
-                    public void handle(Buffer buffer) {
-                        bus.send("map.data", buffer.toString());
+                    public void handle(Buffer buffer) { // Default Buffer is UTF-8 coded
+                        bus.send(container.config().getString("address"), buffer.toString());
                         //log.warn("RECEIVED JUHUUUUHUUHUJ");
-                        netSocket.close();
+                        //netSocket.close();
                     }
-                });
+                }));
             }
         }).listen(++port);
 
@@ -77,4 +98,12 @@ public class ReceiveMap extends Verticle {
 
     }
 
+    public void countWords(String s){
+        if(wordMap.get(s) == null){
+            wordMap.put(s,1);
+        }else{
+            int tmp = (wordMap.get(s));
+            wordMap.put(s, ++tmp);
+        }
+    }
 }
