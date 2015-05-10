@@ -55,7 +55,7 @@ public class ReceiveMap extends Verticle {
         bus.registerHandler("map.data.word", new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message){
-                System.out.println(message.body());
+                //System.out.println(message.body());
                 if (message.body().startsWith("  Inconsistencies in Big Data")){
                     check++;
                 }
@@ -63,8 +63,8 @@ public class ReceiveMap extends Verticle {
                 //message.body().chars().parallel().forEach(c -> countChar((char) c));
                 /**String[] test = message.body().split(" ");
                 Arrays.stream(test).parallel().forEach(s -> countWords((String) s));
-                // System.out.print(message.body());
-                bus.send("pingVerticle.set.free", true);**/
+                // System.out.print(message.body());**/
+                bus.send("notify", true);
             }
         });
 

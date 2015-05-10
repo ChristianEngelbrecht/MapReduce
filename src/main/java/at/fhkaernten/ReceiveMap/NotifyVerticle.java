@@ -19,10 +19,12 @@ public class NotifyVerticle extends Verticle {
     @Override
     public void start(){
         NetClient client = vertx.createNetClient();
+        bus = vertx.eventBus();
         bus.registerHandler("notify", new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message) {
-                client.connect(666, new AsyncResultHandler<NetSocket>() {
+                System.out.println("te");
+                client.connect(667, new AsyncResultHandler<NetSocket>() {
                     @Override
                     public void handle(AsyncResult<NetSocket> socket) {
                         if (socket.succeeded()){
