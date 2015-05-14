@@ -20,6 +20,8 @@ public class PingVerticle extends Verticle {
     private NetClient client;
     private boolean free;
     private JsonObject config;
+    private NetSocket socketToClose;
+    private NetServer server;
     @Override
     public void start(){
         log = container.logger();
@@ -27,12 +29,13 @@ public class PingVerticle extends Verticle {
         free = true;
         config = container.config();
 
-        NetServer server = vertx.createNetServer();
+        server = vertx.createNetServer();
         int port = config.getInteger("Port");
         server.connectHandler(new Handler<NetSocket>() {
             @Override
             public void handle(final NetSocket netSocket) {
                 //log.info("A new client is connected");
+                socketToClose = netSocket;
 
                 netSocket.dataHandler(new Handler<Buffer>() {
                     @Override
@@ -59,5 +62,19 @@ public class PingVerticle extends Verticle {
                 });
             }
         }).listen(container.config().getInteger("Port"), container.config().getString("IP"));
+    }
+
+    @Override
+    public void stop(){
+        if (socketToClose != null){
+            try{
+                socketToClose.close();
+            } catch (Exception e){}
+        }
+        try {
+            server.close();
+        } finally {
+            log.info("Stopping PingVerticle-Verticle.");
+        }
     }
 }

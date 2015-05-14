@@ -23,7 +23,7 @@ public class Main extends Verticle {
         deployVerticle("at.fhkaernten.ReceiveMap.ReceiveMap");
         deployVerticle("at.fhkaernten.ReceiveMap.PingVerticle");
         deployVerticle("at.fhkaernten.ReceiveMap.NotifyVerticle");
-        //deployVerticle("at.fhkaernten.ReduceSend.ReduceSend");
+        deployVerticle("at.fhkaernten.ReduceSend.ReduceSend");
 
   }
 
