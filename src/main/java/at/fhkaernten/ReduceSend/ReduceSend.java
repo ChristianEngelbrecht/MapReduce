@@ -29,15 +29,14 @@ public class ReduceSend extends Verticle {
         bus.registerHandler("reduceSend.address", new Handler<Message<JsonObject>>() {
             @Override
             public void handle(Message<JsonObject> message) {
-                log.info(message.body());
-                /**client.connect(container.config().getInteger("Port"), container.config().getString("IP"), new Handler<AsyncResult<NetSocket>>() {
+                client.connect(container.config().getInteger("Port"), container.config().getString("IP"), new Handler<AsyncResult<NetSocket>>() {
                     @Override
                     public void handle(AsyncResult<NetSocket> socket) {
                         socketToClose = socket.result();
-                        socket.result().write("Hello to Output");
+                        socket.result().write(message.body().encode() + "#END#");
                         socket.result().close();
                     }
-                });**/
+                });
             }
         });
     }

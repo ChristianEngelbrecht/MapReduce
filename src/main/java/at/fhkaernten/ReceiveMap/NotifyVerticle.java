@@ -20,23 +20,28 @@ public class NotifyVerticle extends Verticle {
     private Logger log;
     private NetSocket socketToClose;
     private NetClient client;
+    private int remotePort;
+    private int ownPort;
 
     @Override
     public void start(){
         client = vertx.createNetClient();
         bus = vertx.eventBus();
         log = container.logger();
+        remotePort = container.config().getInteger("remote_port");
+        ownPort = container.config().getInteger("own_port");
+
         final JsonObject config = container.config();
         bus.registerHandler("notify", new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message) {
                 log.info("Free again - Give me more data");
-                client.connect(config.getInteger("remote_port"), new AsyncResultHandler<NetSocket>() {
+                client.connect(remotePort, new AsyncResultHandler<NetSocket>() {
                     @Override
                     public void handle(AsyncResult<NetSocket> socket) {
                         if (socket.succeeded()){
                             socketToClose = socket.result();
-                            socket.result().write(String.valueOf(config.getInteger("own_port")));
+                            socket.result().write(String.valueOf(ownPort));
                             socket.result().close();
                     }
                     }

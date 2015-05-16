@@ -17,11 +17,11 @@ import org.vertx.java.platform.Verticle;
 public class PingVerticle extends Verticle {
     private Logger log;
     private EventBus bus;
-    private NetClient client;
     private boolean free;
     private JsonObject config;
     private NetSocket socketToClose;
     private NetServer server;
+
     @Override
     public void start(){
         log = container.logger();

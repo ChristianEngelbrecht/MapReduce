@@ -27,15 +27,16 @@ public class ReceiveMap extends Verticle {
     private int port;
     private Map<Character,Object> charMap;
     private Map<String,Object> wordMap;
-    private int check = 0;
     private NetSocket socketToClose;
     private NetServer dataServer;
+    private String address;
     int tmp = 0;
     @Override
     public void start(){
         // Initialisieren der Variablen
         log = container.logger();
         bus = vertx.eventBus();
+        address = container.config().getString("address");
         port =container.config().getInteger("Port");
         free = true;
         charMap = new HashMap<>();
@@ -51,7 +52,6 @@ public class ReceiveMap extends Verticle {
             @Override
             public void handle(Message<String> message){
                 message.body().chars().parallel().forEach(c -> countChar((char) c));
-                // System.out.print(message.body());
                 bus.send("pingVerticle.set.free", true);
             }
         });
@@ -59,10 +59,24 @@ public class ReceiveMap extends Verticle {
         bus.registerHandler("map.data.word", new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message){
-                String[] test = message.body().split(" ");
+                // Splitten des empfangenen Strings bei $START$ um Timestamp (Startzeit) sowie Quellhost Name zu bekommen
+                String[] metaData = message.body().split("#START#");
+                String[] dataArray = metaData.length == 2 ? metaData[0].split(" ") : null;
                 wordMap.clear();
-                Arrays.stream(test).parallel().forEach(s -> countWords((String) s));
-                // System.out.print(message.body());
+                Arrays.stream(dataArray).parallel().forEach(s -> countWords((String) s));
+                // Anhängen der Metadaten
+                String[] meta = metaData[1].split("#TIME#");
+                if(wordMap.get("#TIME#") == null){
+                    wordMap.put("#TIME#", meta[1]);
+                } else{
+                    wordMap.put("ERROR", "Adding timestamp failed");
+                }
+                if(wordMap.get("#SOURCE#") == null){
+                    wordMap.put("#SOURCE#", meta[0].replace("#SOURCE#", ""));
+                } else{
+                    wordMap.put("ERROR", "Adding source failed");
+                }
+
                 bus.send("reduceSend.address", new JsonObject(wordMap));
                 bus.send("notify", true);
             }
@@ -74,10 +88,10 @@ public class ReceiveMap extends Verticle {
             public void handle(final NetSocket netSocket) {
                 socketToClose = netSocket;
                 log.info("A data client has connected");
-                netSocket.dataHandler(RecordParser.newDelimited("$END$", new Handler<Buffer>() {
+                netSocket.dataHandler(RecordParser.newDelimited("#END#", new Handler<Buffer>() {
                     @Override
                     public void handle(Buffer buffer) { // Default Buffer is UTF-8 coded
-                        bus.send(container.config().getString("address"), buffer.toString());
+                        bus.send(address, buffer.toString());
                         netSocket.close();
                     }
                 }));
