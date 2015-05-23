@@ -33,19 +33,14 @@ public class ReceiveMap extends Verticle {
     @Override
     public void start(){
         // Initialisieren der Variablen
-        log = container.logger();
-        bus = vertx.eventBus();
-        address = container.config().getString("address");
-        port =container.config().getInteger("Port");
-        free = true;
-        wordMap = new HashMap<>();
+        initialize();
+
         bus.registerHandler("receiveMap.set.free", new Handler<Message<Boolean>>() {
             @Override
             public void handle(Message<Boolean> message) {
                 free = message.body();
             }
         });
-
 
         bus.registerHandler("map.data.word", new Handler<Message<String>>() {
             @Override
@@ -104,7 +99,6 @@ public class ReceiveMap extends Verticle {
         }
     }
 
-
     public void countWords(String s){
         if(wordMap.get(s) == null){
             wordMap.put(s,1);
@@ -116,6 +110,15 @@ public class ReceiveMap extends Verticle {
                 e.printStackTrace();
             }
         }
+    }
+
+    private void initialize(){
+        log = container.logger();
+        bus = vertx.eventBus();
+        address = container.config().getString("address");
+        port =container.config().getInteger("port");
+        free = true;
+        wordMap = new HashMap<>();
     }
 
     @Override

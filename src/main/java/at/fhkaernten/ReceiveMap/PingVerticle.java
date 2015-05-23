@@ -24,17 +24,10 @@ public class PingVerticle extends Verticle {
 
     @Override
     public void start(){
-        log = container.logger();
-        bus = vertx.eventBus();
-        free = true;
-        config = container.config();
-
-        server = vertx.createNetServer();
-        int port = config.getInteger("Port");
+        initialize();
         server.connectHandler(new Handler<NetSocket>() {
             @Override
             public void handle(final NetSocket netSocket) {
-                //log.info("A new client is connected");
                 socketToClose = netSocket;
 
                 netSocket.dataHandler(new Handler<Buffer>() {
@@ -43,15 +36,13 @@ public class PingVerticle extends Verticle {
                         //log.info("I received " + buffer.toString());
                         if (buffer.toString().equals("ping") && free == true){
                             free = false;
-                            //log.info("MapReduce client with port " + config.getInteger("Port") + " is available");
                             // Port des aktuell verfügbaren MapReduce Clients wird retourniert
-                            netSocket.write(String.valueOf(config.getInteger("Port")));
+                            netSocket.write(String.valueOf(config.getInteger("port")));
                             bus.send("receiveMap.set.free", free);
                         } else {
                             if (!buffer.toString().equals("ping")) {
                                 free = false;
                                 netSocket.close();
-                                //log.info("Received data for mapReduce task");
                                 bus.send("map.data", buffer.toString());
                             } else {
                                 netSocket.close();
@@ -61,7 +52,16 @@ public class PingVerticle extends Verticle {
                     }
                 });
             }
-        }).listen(container.config().getInteger("Port"), container.config().getString("IP"));
+        }).listen(container.config().getInteger("port"), container.config().getString("IP"));
+    }
+
+    public void initialize(){
+        log = container.logger();
+        bus = vertx.eventBus();
+        free = true;
+        config = container.config();
+
+        server = vertx.createNetServer();
     }
 
     @Override

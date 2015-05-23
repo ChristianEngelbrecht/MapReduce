@@ -22,14 +22,14 @@ public class ReduceSend extends Verticle {
     private NetClient clientToClose;
     @Override
     public void start(){
+        initialize();
+
         final NetClient client = vertx.createNetClient();
         clientToClose = client;
-        bus = vertx.eventBus();
-        log = container.logger();
         bus.registerHandler("reduceSend.address", new Handler<Message<JsonObject>>() {
             @Override
             public void handle(Message<JsonObject> message) {
-                client.connect(container.config().getInteger("Port"), container.config().getString("IP"), new Handler<AsyncResult<NetSocket>>() {
+                client.connect(container.config().getInteger("port"), container.config().getString("IP"), new Handler<AsyncResult<NetSocket>>() {
                     @Override
                     public void handle(AsyncResult<NetSocket> socket) {
                         socketToClose = socket.result();
@@ -41,6 +41,12 @@ public class ReduceSend extends Verticle {
             }
         });
     }
+
+    private void initialize(){
+        bus = vertx.eventBus();
+        log = container.logger();
+    }
+
     @Override
     public void stop(){
         if (socketToClose != null){

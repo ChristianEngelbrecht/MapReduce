@@ -1,6 +1,6 @@
 {
   "config":{
-    "Port":888,
+    "port":888,
     "IP":"localhost"
   }
 }

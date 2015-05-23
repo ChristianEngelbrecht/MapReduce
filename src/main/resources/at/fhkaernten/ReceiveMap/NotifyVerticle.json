@@ -1,6 +1,6 @@
 {
   "config":{
-    "own_port":1234,
-    "remote_port":667
+    "port":2234,
+    "remotePort":667
   }
 }

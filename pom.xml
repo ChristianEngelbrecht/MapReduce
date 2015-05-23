@@ -119,14 +119,11 @@
         <groupId>io.vertx</groupId>
         <artifactId>vertx-maven-plugin</artifactId>
         <version>${maven.vertx.plugin.version}</version>
-        <!--
-        You can specify extra config to the plugin as required here
         <configuration>
-           <configFile>/path/to/MyVerticle.conf</configFile>
+           <configFile>src/main/resources/conf1234.conf</configFile>
            <instances>1</instances>
-           <classpath>src/main/resources/:src/test/resources/:target/classes/:target/test-classes/</classpath>
+           <!--classpath>src/main/resources/:src/test/resources/:target/classes/:target/test-classes/</classpath-->
         </configuration>
-        -->
         <!-- Make sure that the plugin uses the vert.x versions from this pom.xml not from its own pom.xml -->
         <dependencies>
           <dependency>

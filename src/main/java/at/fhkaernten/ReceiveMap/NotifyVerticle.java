@@ -25,11 +25,7 @@ public class NotifyVerticle extends Verticle {
 
     @Override
     public void start(){
-        client = vertx.createNetClient();
-        bus = vertx.eventBus();
-        log = container.logger();
-        remotePort = container.config().getInteger("remote_port");
-        ownPort = container.config().getInteger("own_port");
+        initialize();
 
         final JsonObject config = container.config();
         bus.registerHandler("notify", new Handler<Message<String>>() {
@@ -48,6 +44,14 @@ public class NotifyVerticle extends Verticle {
                 });
             }
         });
+    }
+
+    public void initialize(){
+        client = vertx.createNetClient();
+        bus = vertx.eventBus();
+        log = container.logger();
+        remotePort = container.config().getInteger("remotePort");
+        ownPort = container.config().getInteger("port");
     }
 
     @Override
