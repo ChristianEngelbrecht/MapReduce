@@ -25,7 +25,6 @@ public class ReceiveMap extends Verticle {
     private EventBus bus;
     private boolean free;
     private int port;
-    private Map<Character,Object> charMap;
     private Map<String,Object> wordMap;
     private NetSocket socketToClose;
     private NetServer dataServer;
@@ -39,7 +38,6 @@ public class ReceiveMap extends Verticle {
         address = container.config().getString("address");
         port =container.config().getInteger("Port");
         free = true;
-        charMap = new HashMap<>();
         wordMap = new HashMap<>();
         bus.registerHandler("receiveMap.set.free", new Handler<Message<Boolean>>() {
             @Override
@@ -48,35 +46,14 @@ public class ReceiveMap extends Verticle {
             }
         });
 
-        bus.registerHandler("map.data.char", new Handler<Message<String>>() {
-            @Override
-            public void handle(Message<String> message){
-                message.body().chars().parallel().forEach(c -> countChar((char) c));
-                bus.send("pingVerticle.set.free", true);
-            }
-        });
 
         bus.registerHandler("map.data.word", new Handler<Message<String>>() {
             @Override
             public void handle(Message<String> message){
                 // Splitten des empfangenen Strings bei $START$ um Timestamp (Startzeit) sowie Quellhost Name zu bekommen
-                String[] metaData = message.body().split("#START#");
-                String[] dataArray = metaData.length == 2 ? metaData[0].split(" ") : null;
-                wordMap.clear();
-                Arrays.stream(dataArray).parallel().forEach(s -> countWords((String) s));
-                // Anhängen der Metadaten
-                String[] meta = metaData[1].split("#TIME#");
-                if(wordMap.get("#TIME#") == null){
-                    wordMap.put("#TIME#", meta[1]);
-                } else{
-                    wordMap.put("ERROR", "Adding timestamp failed");
-                }
-                if(wordMap.get("#SOURCE#") == null){
-                    wordMap.put("#SOURCE#", meta[0].replace("#SOURCE#", ""));
-                } else{
-                    wordMap.put("ERROR", "Adding source failed");
-                }
 
+                parseMetaDataAndInitializeDataSet(message.body());
+                container.logger().trace("receiveData:" + wordMap.get("#ID#"));
                 bus.send("reduceSend.address", new JsonObject(wordMap));
                 bus.send("notify", true);
             }
@@ -91,7 +68,9 @@ public class ReceiveMap extends Verticle {
                 netSocket.dataHandler(RecordParser.newDelimited("#END#", new Handler<Buffer>() {
                     @Override
                     public void handle(Buffer buffer) { // Default Buffer is UTF-8 coded
-                        bus.send(address, buffer.toString());
+                        String[] tmp = buffer.toString().split("#UUID#");
+                        container.logger().trace("receiveData:" + tmp[1]);
+                        bus.send(address, tmp[0]);
                         netSocket.close();
                     }
                 }));
@@ -100,16 +79,31 @@ public class ReceiveMap extends Verticle {
 
     }
 
-    public void countChar(char c){
-        if(charMap.get(c) == null){
-            charMap.put(c,1);
-        }else{
-            int tmp = (Integer) (charMap.get(c));
-            charMap.put(c, ++tmp);
+    private void parseMetaDataAndInitializeDataSet(String message){
+        String[] metaData = message.split("#START#");
+        String[] dataArray = metaData.length == 2 ? metaData[0].split(" ") : null;
+        wordMap.clear();
+        Arrays.stream(dataArray).parallel().forEach(s -> countWords((String) s));
+        // Anhängen der Metadaten
+        String[] meta = metaData[1].split("#TIME#");
+        if(wordMap.get("#TIME#") == null){
+            wordMap.put("#TIME#", meta[1]);
+        } else{
+            wordMap.put("ERROR", "Adding timestamp failed");
         }
-        System.out.print(charMap.toString());
-
+        meta = meta[0].split("#SOURCE#");
+        if(wordMap.get("#SOURCE#") == null){
+            wordMap.put("#SOURCE#", meta[1]);
+        } else{
+            wordMap.put("ERROR", "Adding source failed");
+        }
+        if(wordMap.get("#ID#") == null){
+            wordMap.put("#ID#",  meta[0].replace("#ID#", ""));
+        } else{
+            wordMap.put("ERROR", "Adding UUID failed");
+        }
     }
+
 
     public void countWords(String s){
         if(wordMap.get(s) == null){

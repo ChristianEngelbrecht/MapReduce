@@ -33,6 +33,7 @@ public class ReduceSend extends Verticle {
                     @Override
                     public void handle(AsyncResult<NetSocket> socket) {
                         socketToClose = socket.result();
+                        container.logger().trace("sendResult:" + message.body().getString("ID"));
                         socket.result().write(message.body().encode() + "#END#");
                         socket.result().close();
                     }
