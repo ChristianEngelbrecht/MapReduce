@@ -107,7 +107,8 @@ public class ReceiveMap extends Verticle {
                 tmp = (Integer) wordMap.get(s);
                 wordMap.put(s, ++tmp);
             } catch (Exception e){
-                e.printStackTrace();
+                log.warn(s + " " + tmp);
+                //e.printStackTrace();
             }
         }
     }

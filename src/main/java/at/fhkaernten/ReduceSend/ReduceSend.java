@@ -29,7 +29,7 @@ public class ReduceSend extends Verticle {
         bus.registerHandler("reduceSend.address", new Handler<Message<JsonObject>>() {
             @Override
             public void handle(Message<JsonObject> message) {
-                client.connect(container.config().getInteger("port"), container.config().getString("IP"), new Handler<AsyncResult<NetSocket>>() {
+                client.connect(container.config().getInteger("portOutput"), container.config().getString("IP"), new Handler<AsyncResult<NetSocket>>() {
                     @Override
                     public void handle(AsyncResult<NetSocket> socket) {
                         socketToClose = socket.result();

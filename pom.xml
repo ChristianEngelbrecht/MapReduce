@@ -120,7 +120,7 @@
         <artifactId>vertx-maven-plugin</artifactId>
         <version>${maven.vertx.plugin.version}</version>
         <configuration>
-           <configFile>src/main/resources/conf1234.conf</configFile>
+           <configFile>src/main/resources/conf1234.json</configFile>
            <instances>1</instances>
            <!--classpath>src/main/resources/:src/test/resources/:target/classes/:target/test-classes/</classpath-->
         </configuration>

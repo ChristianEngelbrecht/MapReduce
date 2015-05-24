@@ -31,7 +31,6 @@ public class Main extends Verticle {
   }
 
     private void deployVerticle(final String classname) {
-
         try {
             JsonObject config = getConfigs(classname);
             config.putNumber("port", port);
