@@ -1,6 +1,6 @@
 {
   "config":{
     "portOutput":888,
-    "IP":"localhost"
+    "ipOutput":"localhost"
   }
 }

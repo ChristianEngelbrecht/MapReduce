@@ -52,7 +52,8 @@ public class PingVerticle extends Verticle {
                     }
                 });
             }
-        }).listen(container.config().getInteger("port"), container.config().getString("IP"));
+        }).listen(container.config().getInteger("port"));
+        // , container.config().getString("ip")
     }
 
     public void initialize(){

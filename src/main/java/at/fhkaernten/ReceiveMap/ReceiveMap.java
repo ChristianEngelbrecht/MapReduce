@@ -49,7 +49,8 @@ public class ReceiveMap extends Verticle {
 
                 parseMetaDataAndInitializeDataSet(message.body());
                 container.logger().trace("receiveData:" + wordMap.get("#ID#"));
-                bus.send("reduceSend.address", new JsonObject(wordMap));
+                bus.send("reduceSend.address", new JsonObject(wordMap)); // Vert.x kann keine Hashmap versenden -> Deshalb Json Format
+                // Signalisierung an NotifyVerticle, dass der MapReduce Worker wieder frei ist und weitere Daten verarbeiten kann
                 bus.send("notify", true);
             }
         });
@@ -64,7 +65,8 @@ public class ReceiveMap extends Verticle {
                     @Override
                     public void handle(Buffer buffer) { // Default Buffer is UTF-8 coded
                         String[] tmp = buffer.toString().split("#UUID#");
-                        container.logger().trace("receiveData:" + tmp[1]);
+                        container.logger().info("receiveData:" + tmp[1]);
+                        // Die Adresse bestimmt die Methode die ausgeführt wird
                         bus.send(address, tmp[0]);
                         netSocket.close();
                     }
@@ -74,6 +76,10 @@ public class ReceiveMap extends Verticle {
 
     }
 
+    /**
+     * Diese Methode parsed die Metadaten und ruft den Map Task (countWords) auf
+     * @param message Nachricht von ReadData-Modul
+     */
     private void parseMetaDataAndInitializeDataSet(String message){
         String[] metaData = message.split("#START#");
         String[] dataArray = metaData.length == 2 ? metaData[0].split(" ") : null;
@@ -99,6 +105,10 @@ public class ReceiveMap extends Verticle {
         }
     }
 
+    /**
+     * Diese Methode legt eine Hashmap mit dem Wort als Key und der Anzahl des Wortes als Value ab == Map Job
+     * @param s String mit Wörtern
+     */
     public void countWords(String s){
         if(wordMap.get(s) == null){
             wordMap.put(s,1);

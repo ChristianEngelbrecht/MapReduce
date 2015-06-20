@@ -19,10 +19,15 @@ todo
  */
 public class Main extends Verticle {
     private int port;
+    private String ip;
+    //IP-Adresse von ReduceOutput
+    private String ipOutput;
 
     @Override
       public void start(){
         port = container.config().getInteger("port");
+        ip = container.config().getString("ip");
+        ipOutput = container.config().getString("ipOutput");
         deployVerticle("at.fhkaernten.ReceiveMap.ReceiveMap");
         deployVerticle("at.fhkaernten.ReceiveMap.PingVerticle");
         deployVerticle("at.fhkaernten.ReceiveMap.NotifyVerticle");
@@ -33,7 +38,10 @@ public class Main extends Verticle {
     private void deployVerticle(final String classname) {
         try {
             JsonObject config = getConfigs(classname);
+            //überschreiben/anlegen von initialen Werten
             config.putNumber("port", port);
+            config.putString("ip", ip);
+            config.putString("ipOutput", ipOutput);
             container.deployVerticle(
                     classname,
                     config,

@@ -1,7 +1,7 @@
 {
   "config":{
     "port":1234,
-    "IP":"localhost",
+    "ip":"localhost",
     "address":"map.data.word"
   }
 }
