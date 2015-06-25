@@ -17,10 +17,9 @@ import java.util.Map;
 
 
 /**
- * Created by Christian on 04.04.2015.
+ * This verticle receives data packages from ReadData module and performs map and reduce operations
  */
 public class ReceiveMap extends Verticle {
-    // Deklarieren der notwendigen Variablen
     private Logger log;
     private EventBus bus;
     private boolean free;
@@ -30,12 +29,13 @@ public class ReceiveMap extends Verticle {
     private NetServer dataServer;
     private String address;
     int tmp = 0;
+
     @Override
     public void start(){
-        // Initialisieren der Variablen
         initialize();
 
         bus.registerHandler("receiveMap.set.free", new Handler<Message<Boolean>>() {
+
             @Override
             public void handle(Message<Boolean> message) {
                 free = message.body();
@@ -43,20 +43,18 @@ public class ReceiveMap extends Verticle {
         });
 
         bus.registerHandler("map.data.word", new Handler<Message<String>>() {
+
             @Override
             public void handle(Message<String> message){
-                // Splitten des empfangenen Strings bei $START$ um Timestamp (Startzeit) sowie Quellhost Name zu bekommen
-
                 parseMetaDataAndInitializeDataSet(message.body());
-                container.logger().trace("receiveData:" + wordMap.get("#ID#"));
-                bus.send("reduceSend.address", new JsonObject(wordMap)); // Vert.x kann keine Hashmap versenden -> Deshalb Json Format
-                // Signalisierung an NotifyVerticle, dass der MapReduce Worker wieder frei ist und weitere Daten verarbeiten kann
-                bus.send("notify", true);
+                container.logger().info("finishedMap:" + wordMap.get("#ID#"));
+                bus.send("reduceSend.address", new JsonObject(wordMap));
             }
         });
 
         dataServer = vertx.createNetServer();
         dataServer.connectHandler(new Handler<NetSocket>() {
+
             @Override
             public void handle(final NetSocket netSocket) {
                 socketToClose = netSocket;
@@ -66,7 +64,6 @@ public class ReceiveMap extends Verticle {
                     public void handle(Buffer buffer) { // Default Buffer is UTF-8 coded
                         String[] tmp = buffer.toString().split("#UUID#");
                         container.logger().info("receiveData:" + tmp[1]);
-                        // Die Adresse bestimmt die Methode die ausgeführt wird
                         bus.send(address, tmp[0]);
                         netSocket.close();
                     }
@@ -77,15 +74,13 @@ public class ReceiveMap extends Verticle {
     }
 
     /**
-     * Diese Methode parsed die Metadaten und ruft den Map Task (countWords) auf
-     * @param message Nachricht von ReadData-Modul
+     * This methods is responsible for parsing the metadata and calls the map and reduce method (countWords)
      */
     private void parseMetaDataAndInitializeDataSet(String message){
         String[] metaData = message.split("#START#");
         String[] dataArray = metaData.length == 2 ? metaData[0].split(" ") : null;
         wordMap.clear();
         Arrays.stream(dataArray).parallel().forEach(s -> countWords((String) s));
-        // Anhängen der Metadaten
         String[] meta = metaData[1].split("#TIME#");
         if(wordMap.get("#TIME#") == null){
             wordMap.put("#TIME#", meta[1]);
@@ -106,8 +101,7 @@ public class ReceiveMap extends Verticle {
     }
 
     /**
-     * Diese Methode legt eine Hashmap mit dem Wort als Key und der Anzahl des Wortes als Value ab == Map Job
-     * @param s String mit Wörtern
+     * This method counts the words and saves the result in a hashmap the word as a key and the amount of words as a value
      */
     public void countWords(String s){
         if(wordMap.get(s) == null){
@@ -118,9 +112,8 @@ public class ReceiveMap extends Verticle {
                 wordMap.put(s, ++tmp);
             } catch (Exception e){
                 log.warn(s + " " + tmp);
-                //e.printStackTrace();
             }
-        }
+        } // if-else
     }
 
     private void initialize(){
@@ -138,8 +131,6 @@ public class ReceiveMap extends Verticle {
             try{
                 socketToClose.close();
             } catch (Exception e){}
-        } else {
-            log.info("Stopping ReceiveMap-Verticle.");
         }
         try {
             dataServer.close();

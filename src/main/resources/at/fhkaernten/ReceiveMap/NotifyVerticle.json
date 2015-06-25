@@ -1,6 +1,7 @@
 {
   "config":{
-    "port":2234,
-    "remotePort":667
+    "port":1234,
+    "remotePort":667,
+    "notifyIp":"192.168.0.1"
   }
 }

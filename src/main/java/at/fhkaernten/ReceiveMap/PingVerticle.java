@@ -1,18 +1,16 @@
 package at.fhkaernten.ReceiveMap;
 
-import org.vertx.java.core.AsyncResult;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.eventbus.EventBus;
 import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.logging.Logger;
-import org.vertx.java.core.net.NetClient;
 import org.vertx.java.core.net.NetServer;
 import org.vertx.java.core.net.NetSocket;
 import org.vertx.java.platform.Verticle;
 
 /**
- * Created by Christian
+ * Class PingVerticle is used to signal ReadData that the host is free by replying with its own port number
  */
 public class PingVerticle extends Verticle {
     private Logger log;
@@ -25,18 +23,20 @@ public class PingVerticle extends Verticle {
     @Override
     public void start(){
         initialize();
+
+
         server.connectHandler(new Handler<NetSocket>() {
+
             @Override
             public void handle(final NetSocket netSocket) {
                 socketToClose = netSocket;
 
                 netSocket.dataHandler(new Handler<Buffer>() {
+
                     @Override
                     public void handle(Buffer buffer) {
-                        //log.info("I received " + buffer.toString());
                         if (buffer.toString().equals("ping") && free == true){
                             free = false;
-                            // Port des aktuell verfügbaren MapReduce Clients wird retourniert
                             netSocket.write(String.valueOf(config.getInteger("port")));
                             bus.send("receiveMap.set.free", free);
                         } else {
@@ -47,13 +47,12 @@ public class PingVerticle extends Verticle {
                             } else {
                                 netSocket.close();
 
-                            }
-                        }
+                            } // if-else
+                        } // if-else
                     }
                 });
             }
         }).listen(container.config().getInteger("port"));
-        // , container.config().getString("ip")
     }
 
     public void initialize(){
@@ -61,7 +60,6 @@ public class PingVerticle extends Verticle {
         bus = vertx.eventBus();
         free = true;
         config = container.config();
-
         server = vertx.createNetServer();
     }
 
